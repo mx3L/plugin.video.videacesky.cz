@@ -25,14 +25,13 @@ import urllib
 import urllib2
 import cookielib
 from xml.etree.ElementTree import fromstring
+
 from demjson import demjson
 
 import util
 import resolver
 from provider import ResolveException
 from provider import ContentProvider
-import YDStreamExtractor
-
 
 class VideaceskyContentProvider(ContentProvider):
     def __init__(self, username=None, password=None, filter=None,
@@ -200,8 +199,11 @@ class VideaceskyContentProvider(ContentProvider):
 
         for playlist_item in jsondata['playlist']:
             playlist_item['file'] = playlist_item['file'].replace('time_continue=1&', '')
-            vid = YDStreamExtractor.getVideoInfo(playlist_item['file'], quality=3) #quality is 0=SD, 1=720p, 2=1080p, 3=Highest Available
-            video_url = [vid.streams()[0]]
+
+            from Plugins.Extensions.archivCZSK.engine import client
+            video_formats = client.getVideoFormats(playlist_item['file'])
+            video_url = [video_formats[-1]]
+            print video_url
             subs = playlist_item['tracks']
             if video_url and subs:
                 for i in video_url:
@@ -217,9 +219,8 @@ class VideaceskyContentProvider(ContentProvider):
                     item['title'] = i['title']
                 except KeyError:
                     pass
-                item['url'] = i['xbmc_url']
-                item['quality'] = i['ytdl_format']['height']
-                item['surl'] = i['ytdl_format']['webpage_url']
+                item['url'] = i['url']
+                item['quality'] = i['format_note']
                 item['subs'] = i['subs']
                 item['headers'] = {}
                 try:
